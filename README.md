@@ -1023,11 +1023,11 @@ then edit the `/etc/snmp/snmp.conf` file and remove the line from the image abov
 
 Next, run this command and see if credientals get snagged (Photo example below):
 
-`snmpwalk -v 2c -c public 192.168.190.156 NET-SNMP-EXTEND-MIB::nsExtendOutputFull`
+`snmpwalk -v 2c -c public <IP> NET-SNMP-EXTEND-MIB::nsExtendOutputFull`
 
 if this doesnt work may also be:
 
-`snmpwalk -v 1 -c public 192.168.214.149 NET-SNMP-EXTEND-MIB::nsExtendOutputFull`
+`snmpwalk -v 1 -c public <IP> NET-SNMP-EXTEND-MIB::nsExtendOutputFull`
 
 ![image](https://github.com/cbass12321/OSCP-Cheat-Sheets/assets/99432278/0778a253-d859-4768-88bb-1113f6ae2f36)
 
