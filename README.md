@@ -1029,7 +1029,7 @@ if this doesnt work may also be:
 
 `snmpwalk -v 1 -c public 192.168.214.149 NET-SNMP-EXTEND-MIB::nsExtendOutputFull`
 
-![image](https://github.com/cbass12321/OSCP-Cheat-Sheets/assets/99432278/24ddf192-5158-4a6e-8943-aafcb6e22376)
+![image](https://github.com/cbass12321/OSCP-Cheat-Sheets/assets/99432278/0778a253-d859-4768-88bb-1113f6ae2f36)
 
 Otherwise run this command 
 
